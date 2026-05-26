@@ -23,4 +23,12 @@ struct edge {
     float probability;
 };
 
+struct auxiliar_words {
+    char *first_word;
+    char *next_word;
+};
+
+struct auxiliar_words *auxiliar_str(void);
+
+
 #endif //LOW_LEVEL_NLP_02_NODE_STR_H
