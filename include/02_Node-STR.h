@@ -5,4 +5,22 @@
 #ifndef LOW_LEVEL_NLP_02_NODE_STR_H
 #define LOW_LEVEL_NLP_02_NODE_STR_H
 
+struct graph {
+    int n_elements;
+    struct node *start;
+};
+
+struct node {
+    char *word;
+    float probability;
+    struct node *next;
+    struct edge *connection;
+};
+
+struct edge {
+    struct edge *next_edge;
+    struct node *next_node;
+    float probability;
+};
+
 #endif //LOW_LEVEL_NLP_02_NODE_STR_H
