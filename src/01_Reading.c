@@ -3,7 +3,6 @@
 //
 
 #include "../include/01_Reading.h"
-#include "../include/02_Node-STR.h"
 
 #define max_size 46
 
