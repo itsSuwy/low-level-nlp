@@ -2,9 +2,6 @@
 // Created by suwy on 5/25/26.
 //
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "../include/01_Reading.h"
 #include "../include/02_Node-STR.h"
 
@@ -13,8 +10,6 @@
 // Electroencefalografista <- 25 letters
 // Anticonstitucionalísimamente <- 29 letters
 // Pneumonoultramicroscopicsilicovolcanoconiosis <- 45 letters
-
-
 
 void reading_file(struct graph *graph) {
     FILE *fp = fopen("../texts/lamigala.txt", "r");
