@@ -3,9 +3,8 @@
 //
 
 #include "../include/02_Node-STR.h"
-#include "../include/01_Reading.h"
 
-// Start of initializations
+// START: of initializations
 struct graph *initialise_graph(void) { // The initialization of a graph
     struct graph *graph = (struct graph *)calloc(1,sizeof(struct graph));
     if (!graph) {
@@ -23,7 +22,7 @@ struct node *initialise_node(void){ // The initialization of a node
     return node;
 }
 
-struct edge *initialise_edge(void) { // The initialuzation of an edge
+struct edge *initialise_edge(void) { // The initialization of an edge
     struct edge *edge = (struct edge *)calloc(1,sizeof(struct edge));
     if (!edge) {
         exit(-1);
@@ -32,138 +31,118 @@ struct edge *initialise_edge(void) { // The initialuzation of an edge
 }
 
 void initialise_word_stack(struct graph *graph) {
-    graph->stack = (struct word_stack *)calloc(1,sizeof(struct word_stack));
+    graph->stack = (struct stack_nodes *)calloc(1,sizeof(struct stack_nodes));
     if (!graph->stack) {
         exit(-1);
     }
     return;
 }
-/*
-void assign_pointers(struct word_stack *stack, char *word) {
-    int size_ptr = 0;
-    if (!stack->first_word) {
-        // Trabajamos con el apuntador a la primera palabra
-    }else {
-        // Trabajamos con el apuntador a la segunda palabra
+// END: of initilizations
+
+// INICIO: Configuracion de los nodos
+void aduana(struct graph *graph, char *word) {
+    if (!word) { // Se llego a la palabra final
+        reset_stack(graph->stack);
+        return;
+    }
+    graph->n_elements++; // Como llego una nueva palabra, se actualizan la cantidad de elementos
+    struct node *node = node_to_graph(graph, word);
+    if (!graph->stack->first_node) { // En caso de que no haya nadie en la primera posicion
+        graph->stack->first_node = node;
+    }else { // En caso de que toque usar la segunda posicion
+        graph->stack->second_node = node;
+        assign_edge(graph->stack->first_node, graph->stack->second_node);
+        change_values(graph->stack);
     }
 }
 
-^/
-
-
-// End of initializations of structures
-/*
-void initialize_pointers(struct graph *graph, struct auxiliar_words *auxiliar, char *word) {
-    int size_ptr = 0, place = 0;
-    size_ptr = strlen(word);
-    place = which_way(auxiliar);
-    switch (place) {
-        case 1:{
-            auxiliar->first_word = (char *)calloc(size_ptr+1,sizeof(char));
-            strcpy(auxiliar->first_word,word);
-            break;
-        }
-        case 2:{
-            auxiliar->next_word = (char *)calloc(size_ptr+1,sizeof(char));
-            strcpy(auxiliar->next_word,word);
-            normal_push_to_graph(graph,auxiliar);
-            break;
-        }
-    }
+void change_values(struct stack_nodes *stack) {
+    stack->first_node = stack->second_node;
+    stack->second_node = NULL;
 }
 
-void normal_push_to_graph(struct graph *graph, struct auxiliar_words *auxiliar) {
-    struct node *check = security_check(graph->start, auxiliar->first_word);
-    if (!check) {
-        graph->n_elements++;
-        struct node *node_1 = filling_node(auxiliar->first_word);
-        insert_element(graph,node_1);
-        struct node *node_2 = next_word(graph,auxiliar->next_word);
-    }else{
-        update_occurrences(check);
-        struct node *node_2 = next_word(graph, auxiliar->next_word);
-
-    }
+void reset_stack(struct stack_nodes *stack) {
+    stack->first_node = NULL;
+    stack->second_node = NULL;
 }
 
-void connections(struct node *node_1, struct node *node_2){
-    struct edge *edge = is_there_a_connection(node_1->connection, node_2->word);
-    if (!edge) { // There is no connection
-        struct edge *new_edge = initialise_edge();
-        node_1->connection->last_edge->next_edge = new_edge;
-    }else{
-        edge->occurrences++;
-    }
-} // HE ARE HEEEEEEEERE
-
-struct edge *is_there_a_connection(struct edge *edge, char *word_2) {
-    if (!edge) {
-        return NULL;
-    }
-    if (strcmp(word_2,edge->node->word)==0) {
-        return edge;
-    }
-    return is_there_a_connection(edge->next_edge, word_2);
-}
-
-struct node *next_word(struct graph *graph, char *word) {
-    struct node *check = security_check(graph->start, word);
-    if (!check) {
-        graph->n_elements++;
-        struct node *node = filling_node(word);
-        insert_element(graph,node);
+struct node *node_to_graph(struct graph *graph, char *word) {
+    struct node *repeated_node = word_repeated(graph->start, word);
+    if (!repeated_node) { // No existe la palabra repetida
+        struct node *node = initialise_node();
+        node = filling_node(node, word);
+        list_of_nodes(graph,node);
         return node;
-    }else {
-        update_occurrences(check);
-        return check;
+    }else{ // Si existe alguien con esa palabra
+        repeated_node->occurrences++; // Se actualiza la cantidad de apariciones de la palabra
+        return repeated_node;
     }
 }
 
-struct node *filling_node(char *word) {
+struct node *word_repeated(struct node *node, char *word) { // Indica si ya existe un nodo con la palabra asignada
+    if (!node) {
+        return NULL; // No existe nadie repetido
+    }
+    if (strcmp(node->word, word)==0) { // Existe alguien repetido
+        return node; // Retornamos al nodo repetido
+    }
+    return word_repeated(node->next_node, word);
+}
+
+struct node *filling_node(struct node *node,char *word) { // En caso de que sea la primera vez que aparece la palabra
     int size = 0;
     size = strlen(word);
-    struct node *node = initialise_node();
-    node->word = (char *)calloc(size+1,sizeof(char));
+    node->word = (char *)calloc(size+1,sizeof(char)); // +1 para darle espacio al '\0'
     if (!node->word) {
         exit(-1);
     }
-    strcpy(node->word,word);
-    node->occurrences++;
-    //node->probability = (float)node->occurrences / graph->n_elements;
+    strcpy(node->word,word); // Copiamos la palabra dentro de la direccion
+    node->occurrences=1; // Se inicializa en 1 el numero de apariciones
     return node;
 }
 
-void insert_element(struct graph *graph, struct node *node){
-    if (!graph->start) {
+void list_of_nodes(struct graph *graph, struct node *node) {
+    if (!graph->start) { // Es el primer nodo que entra al grafo
         graph->start = node;
         graph->end = node;
-    }else {
-        graph->end->next = node;
+    }else{ // Ya habia alguien asignado
+        graph->end->next_node = node;
         graph->end = node;
     }
 }
+// FIN: Configuracion de los nodos
 
-struct node *security_check(struct node *node, char *word) {
-    if (!node) {
+// INICIO: Configuracion de las conexiones
+
+
+void assign_edge(struct node *node_1, struct node *node_2) {
+    struct edge *aux = is_there_a_connection(node_1->first_connection, node_2);
+    if (!aux) { // No existe conexion
+        new_edge(node_1, node_2);
+    }else {
+        aux->occurrences++;
+    }
+}
+
+void new_edge(struct node *node_1, struct node *node_2) {
+    struct edge *edge = initialise_edge();
+    edge->node = node_2;
+    edge->occurrences = 1;
+    if (!node_1->first_connection) { // En caso de que sea la primera conexion
+        node_1->first_connection = edge;
+        node_1->last_connection = edge;
+    }else{ // En caso de que haya mas de una conexion
+        node_1->last_connection->next_edge = edge;
+        node_1->last_connection=edge;
+    }
+}
+
+struct edge *is_there_a_connection(struct edge *edge, struct node *node_2) {
+    if (!edge) { // No hay nadie apuntando a node_2
         return NULL;
     }
-    if (strcmp(node->word,word)==0) {
-        return node;
+    if (edge->node == node_2) { // Alguien ya apunta a node_2
+        return edge;
     }
-    return security_check(node->next, word);
+    return is_there_a_connection(edge->next_edge, node_2);
 }
-
-void update_occurrences(struct node *node) {
-    node->occurrences++;
-}
-
-void special_push_to_graph() {
-
-}
-
-void normal_kill(struct auxiliar_words *auxiliar){
-
-    free(auxiliar->next_word);
-
-}
-*/
