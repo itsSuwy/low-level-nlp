@@ -3,8 +3,17 @@
 //
 
 #include "../include/01_Reading.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+//#define max_size 46
 
-#define max_size 46
+#define READY_TO_PUSH 0
+#define WORD_EMPTY 1
+#define EXPANDIBLE_WORD 2
+#define CUT_WORD 3
+#define SPANISH_WORD 4
 
 // Electroencefalografista <- 25 letters
 // Anticonstitucionalísimamente <- 29 letters
@@ -26,13 +35,14 @@ void reading_file(struct graph *graph) {
     size_t len = 0;
     while (getline(&line,&len,fp) != -1) {
         char *string = word_package();
-        extraction(line, string, '\0', graph);
+        extraction(line, string, graph);
     }
     free(line);
     fclose(fp);
 }
 
-char *word_package(void) { // Se crea con memoria dinamica un apuntador que contendra los caracteres
+// START: Formatos para guardar letras
+char *word_package(void) { // Enfocado a letras NORMALES, reserva espacio para su estructura normal
     char *string = (char *)calloc(2, sizeof(char)); // Se inicializa con 2 espacios, uno para el caracter y otro para \0
     if (!string) {
         puts("Memory problem");
@@ -41,7 +51,21 @@ char *word_package(void) { // Se crea con memoria dinamica un apuntador que cont
     return string;
 }
 
-void extraction(char *original_string, char *word, char character, struct graph *graph) {
+char *special_word(void) { // Enfocado a letras HISPANAS, reserva espacio para su estructura en hexadecimal
+    char *word = (char *)calloc(3, sizeof(char));
+    if (!word) {
+        exit(-1);
+    }
+    return word;
+}
+
+// END: Formatos para guardar palabras
+
+/*
+   Funcion recursiva encargada de recorrer caracter por caracter del arreglo,
+   controlando los posibles estados que pueda presentar el codigo respecto a los datos que procesa
+*/
+void extraction(char *original_string, char *word, struct graph *graph) {
     if (*original_string == '\0') { // La linea llego a su fin
         if (word[0] != '\0') {
             aduana(graph, word);
@@ -51,38 +75,41 @@ void extraction(char *original_string, char *word, char character, struct graph 
         return;
     }
     int n = 0;
-    n = validation(original_string, word);
+    n = validation_V2(original_string, word);
     switch (n) {
-        case 0: { // La palabra esta completa y requiere subirse
+        case READY_TO_PUSH: { // La palabra esta completa y requiere subirse
             aduana(graph, word);
             free(word);
             char *new_word = word_package();
-            extraction(original_string+1, new_word, '\0', graph);
+            extraction(original_string+1, new_word, graph);
             break;
         }
-        case 1: { // La palabra esta vacia y no hace falta subirla
-            extraction(original_string+1, word, '\0', graph); // Se reiniciar el valor del caracter
+        case WORD_EMPTY: { // La palabra esta vacia y no hace falta subirla
+            extraction(original_string+1, word, graph);
             break;
         }
-        case 2: { // La palabra esta llena pero aun puede expandirse mas
+        case EXPANDIBLE_WORD: { // La palabra esta llena pero aun puede expandirse mas
+            char character = '\0';
             character = pop(original_string);
             char *modified_word = merge(word, character);
-            extraction(original_string+1, modified_word, character, graph);
+            extraction(original_string+1, modified_word, graph);
             break;
         }
-        case 4: // La palabra fue cortada por un signo de puntuacion
+        case CUT_WORD: {
+            // La palabra fue cortada por un signo de puntuacion
             aduana(graph, word);
             aduana(graph, NULL);
             free(word);
             char *new_word = word_package();
-            extraction(original_string+1, new_word, '\0', graph);
+            extraction(original_string+1, new_word, graph);
             break;
-        case 5: { // Comportamiento para letras especiales hispanas
+        }
+        case SPANISH_WORD: { // Comportamiento para letras especiales hispanas
             char *spanish_word = special_word();
             spanish_word = fill_special_word(original_string, spanish_word);
             char *modified_word = spanish_merge(word,spanish_word);
             free(spanish_word);
-            extraction(original_string+2,modified_word,character,graph);
+            extraction(original_string+2,modified_word,graph);
             break;
         }
         default:
@@ -90,28 +117,78 @@ void extraction(char *original_string, char *word, char character, struct graph 
     }
 }
 
-char *spanish_merge(char *word, char *spanish_character) {
-    int size = 0;
-    size = strlen(word);
-    if (size == 0) { // Nuestra palabra esta vacia
-        word = (char *)realloc(word, 3 *sizeof(char)); // Solo se le agrega un espacio mas a nuestro arreglo original
+int validation_V2(char *original_string, char *word) { // Valida posibles escenarios de la palabra
+    if ((unsigned char)*original_string == 0xC3) { // En caso de que se detecte que es una letra hispana
+        return SPANISH_WORD;
+    }
+    char character = '\0';
+    character = *original_string;
+    switch (character) {
+        case ' ':
+            if (word[0] != '\0') {
+                return READY_TO_PUSH; // Se puede subir la palabra al grafo
+            }else {
+                return WORD_EMPTY; // La palabra carece de informacion para subirse al grafo
+            }
+        // En caso de que se detecten signos que indiquen que la palabra no conecta con otra
+        case ',':
+        case '.':
+        case ':':
+        case ';':
+        case '?':
+        case '!':
+        case '\n':
+            if (word[0] != '\0') {
+                return CUT_WORD; // La palabra esta llena y lista para subir al grafo
+            }else {
+                return WORD_EMPTY;
+            }
+        default:
+            return EXPANDIBLE_WORD; // No se cumplio ningun caso, indica que la palabra puede recibir mas letras
+    }
+}
+
+//START: Logica para caracteres normales
+
+char pop(char *original_string) { // Se encarga de extraer y retornar un solo caracter del string original
+    char value = '\0';
+    value = *original_string;
+    return value;
+}
+
+char *merge(char *word, char character) { // Agrega el caracter extraido del string original al string de la palabra
+    char lower_character = '\0';
+    lower_character = (char)tolower(character);
+    if (word[0] != '\0' ) { // En caso de que en la posicion 1 ya tenga un caracter
+        word = (char *)realloc(word, (strlen(word) + 2) *sizeof(char)); // Se inicializa con dos espacios, uno para el nuevo caracter y otro para \0
         if (!word) {
             exit(-1);
         }
-        strcpy(word, spanish_character);
+        int i = 0;
+        i = strlen(word); // Se calcula la longitud de la cadena actual
+        word[i] = lower_character; // Se inserta el nuevo caracter en la penultima posicion
+        word[i+1] = '\0'; // En la ultima posicion se agrega el \0
         return word;
     }
-    word = (char *)realloc(word, (size+3) *sizeof(char));
-    if (!word) {
-        exit(-1);
-    }
-    word[size] = *spanish_character;
-    word[size+1] = spanish_character[1];
-    word[size+2] = '\0';
+    *word = lower_character; // En la primera posicion del apuntador se guarda el caracter
     return word;
 }
 
-unsigned char spanish_mayus_to_minus(unsigned char letter) {
+// END: Logica para caracteres normales
+
+// START: Logica para caracteres hispanos
+
+char *fill_special_word(char *original_string, char *spanish_word) { // Se encarga de llenar el arreglo dinamico con codigo en hexadecimal
+    spanish_word[0] = (char)*original_string;
+    unsigned char auxiliar = '\0';
+    auxiliar = (unsigned char)*(original_string+1);
+    auxiliar = spanish_mayus_to_minus(auxiliar);
+    spanish_word[1] = (char)auxiliar;
+    spanish_word[2] = '\0';
+    return spanish_word;
+}
+
+unsigned char spanish_mayus_to_minus(unsigned char letter) { // Secuencia de posibles combinaciones de caracteres hispanos
     switch (letter) {
         case 0x91: // Ñ
             return 0xb1; // ñ minuscula
@@ -138,32 +215,34 @@ unsigned char spanish_mayus_to_minus(unsigned char letter) {
         default:
             return letter; // No hace falta modificar la letra
     }
-}
+} // Fuente: https://docs.genexus.com/en/wiki?10513,Unicode%2FUTF-8-Character+table
 
-char *fill_special_word(char *original_string, char *spanish_word) {
-    spanish_word[0] = (char)*original_string;
-    unsigned char auxiliar = '\0';
-    auxiliar = (unsigned char)*(original_string+1);
-    auxiliar = spanish_mayus_to_minus(auxiliar);
-    spanish_word[1] = (char)auxiliar;
-    spanish_word[2] = '\0';
-    return spanish_word;
-}
-
-char *special_word(void) {
-    char *word = (char *)calloc(3, sizeof(char)); // Se le asignan tres espacios
+char *spanish_merge(char *word, char *spanish_character) { // Anexa la letra especial a la palabra original
+    int size = 0;
+    size = strlen(word);
+    if (size == 0) { // Nuestra palabra esta vacia
+        word = (char *)realloc(word, 3 *sizeof(char)); // Solo se le agrega un espacio mas a nuestro arreglo original
+        if (!word) {
+            exit(-1);
+        }
+        strcpy(word, spanish_character);
+        return word;
+    }
+    word = (char *)realloc(word, (size+3) *sizeof(char));
     if (!word) {
         exit(-1);
     }
+    word[size] = *spanish_character;
+    word[size+1] = spanish_character[1];
+    word[size+2] = '\0';
     return word;
 }
 
-char pop(char *original_string) { // Se extrae el caracter de la linea en la posicion actual
-    char value = '\0';
-    value = *original_string;
-    return value;
-}
+// END: Logica para caracteres especiales hispanos
+// NOTA: Esta configuracion tambien tolera caracteres italianos, portugueses, franceses y alemanes.
+// No obstante, NO los convierte a minuscula, si no que los mantiene en formato de origen.
 
+/*
 int validation(char *original_string, char *word) { // En caso de que se detecte un signo de puntuacion, se corta la imagen
     if ((unsigned char)*original_string == 0xC3) { // Se detecto una letra nativa del espaniol
         return 5;
@@ -183,21 +262,4 @@ int validation(char *original_string, char *word) { // En caso de que se detecte
     }
     return 2; // No se encontro un signo de puntuacion lo que indica que la palabra puede crecer
 }
-
-char *merge(char *word, char character) { // Funcion para expandir el tamanio de nuestro apuntador original y asi pueda almacenar mas caracteres
-    char lower_character = '\0';
-    lower_character = (char)tolower(character);
-    if (word[0] != '\0' ) { // En caso de que en la posicion 1 ya tenga un caracter
-        word = (char *)realloc(word, (strlen(word) + 2) *sizeof(char)); // Se inicializa con dos espacios, uno para el nuevo caracter y otro para \0
-        if (!word) {
-            exit(-1);
-        }
-        int i = 0;
-        i = strlen(word); // Se calcula la longitud de la cadena actual
-        word[i] = lower_character; // Se inserta el nuevo caracter en la penultima posicion
-        word[i+1] = '\0'; // En la ultima posicion se agrega el \0
-        return word;
-    }
-    *word = lower_character; // En la primera posicion del apuntador se guarda el caracter
-    return word;
-}
+*/
