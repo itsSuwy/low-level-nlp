@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 4.2)
 project(low_level_nlp C)
 
-set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD 11)
 
 include_directories(include)
 
