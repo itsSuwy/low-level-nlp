@@ -5,11 +5,6 @@
 #ifndef LOW_LEVEL_NLP_02_NODE_STR_H
 #define LOW_LEVEL_NLP_02_NODE_STR_H
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdbool.h>
-//#include "../include/01_Reading.h"
-
 struct graph { // El grafo contiene un registro interno que funciona para almacenar de manera temporal cada palabra
     int n_elements; // Cantidad de palabras que recibe
     struct node *start; // Inicio de la cola de cada nodo del grafo
@@ -36,8 +31,9 @@ struct edge {
 struct stack_nodes {
     struct node *first_node;
     struct node *second_node; // The word that its supposed to point first_word
-    bool kill;
+    //bool kill;
 };
+
 struct graph *initialise_graph(void);
 struct node *initialise_node(void);
 struct edge *initialise_edge(void);
