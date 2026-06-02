@@ -21,11 +21,18 @@
 // Anticonstitucionalísimamente <- 29 letters
 // Pneumonoultramicroscopicsilicovolcanoconiosis <- 45 letters
 
+char *word_package(void);
+char *special_word(void);
+void extraction(char *original_string, char *word, struct graph *graph);
+int validation_V2(char *original_string, char *word);
+char pop(char *original_string);
+char *merge(char *word, char character);
+char *spanish_merge(char *word, char *spanish_character);
+unsigned char spanish_mayus_to_minus(unsigned char letter);
+char *fill_special_word(char *original_string, char *spanish_word);
+int spanish_special_characters(char *original_string);
+
 void reading_file(struct graph *graph) {
-    //FILE *fp = fopen("../texts/lamigala.txt", "r");
-    //FILE *fp = fopen("../texts/Prueba.txt", "r");
-    //FILE *fp = fopen("../texts/Prueba_2.txt", "r");
-    //FILE *fp = fopen("../texts/Prueba_3.txt", "r");
     FILE *fp = fopen("../texts/Prueba_5.txt", "r");
 
     if (!fp) {
@@ -282,29 +289,3 @@ char *spanish_merge(char *word, char *spanish_character) { // Anexa la letra esp
     word[size+2] = '\0';
     return word;
 }
-
-// END: Logica para caracteres especiales hispanos
-// NOTA: Esta configuracion tambien tolera caracteres italianos, portugueses, franceses y alemanes.
-// No obstante, NO los convierte a minuscula, si no que los mantiene en formato de origen.
-
-/*
-int validation(char *original_string, char *word) { // En caso de que se detecte un signo de puntuacion, se corta la imagen
-    if ((unsigned char)*original_string == 0xC3) { // Se detecto una letra nativa del espaniol
-        return 5;
-    }
-    if (*original_string == ' ') { // Se corta la palabra pero esta aun apunta a la siguiente
-        if (word[0] != '\0') { // La palabra tiene contenido en su interior
-            return 0;
-        }else{
-            return 1; // La palabra no tiene contenido en su interior
-        }
-    }
-    if (*original_string == ',' || *original_string == '.' || *original_string == ';' || *original_string == ':' || *original_string == '?' || *original_string == '!' || *original_string == '\n') {
-        if (word[0] != '\0') { // Se corta la palabra pero esta ya NO apunta a la siguiente
-            return 4;
-        }
-        return 1; // La palabra esta vacia, no hace falta subirla al grafo
-    }
-    return 2; // No se encontro un signo de puntuacion lo que indica que la palabra puede crecer
-}
-*/
