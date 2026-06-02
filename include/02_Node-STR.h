@@ -30,7 +30,6 @@ struct edge {
 
 // Funciones publicas
 struct graph *initialise_graph(void);
-void new_edge(struct node *node_1, struct node *node_2);
 void aduana(struct graph *graph, char *word);
 void graph_probability(struct graph *graph);
 
