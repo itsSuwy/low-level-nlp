@@ -205,6 +205,7 @@ static void assign_probability(struct edge *edge, int n_elements, float probabil
 }
 
 void print_graph(struct graph *graph) {
+    printf("Se registraron con exito %i palabras totales\n", graph->n_elements);
     impresion(graph->start);
 }
 
