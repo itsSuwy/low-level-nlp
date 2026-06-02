@@ -116,7 +116,6 @@ void list_of_nodes(struct graph *graph, struct node *node) {
 
 // INICIO: Configuracion de las conexiones
 
-
 void assign_edge(struct node *node_1, struct node *node_2) {
     struct edge *aux = is_there_a_connection(node_1->first_connection, node_2);
     if (!aux) { // No existe conexion
@@ -147,4 +146,37 @@ struct edge *is_there_a_connection(struct edge *edge, struct node *node_2) {
         return edge;
     }
     return is_there_a_connection(edge->next_edge, node_2);
+}
+
+// Calculo de probabilidades
+
+void graph_probability(struct graph *graph) {
+    node_probability(graph->start, graph->n_elements); // Obtiene las probabilidades de P(B)
+    edge_probability(graph->start, graph->n_elements); // Obtiene las probabilidades de P(A|B) = P(BnA)/P(B)
+}
+
+void node_probability(struct node *node, int n_elements) { // Se determina la probabilidad general del Nodo
+    if (!node) {
+        return;
+    }
+    node->probability = (float)node->occurrences / (float)n_elements;
+    return node_probability(node->next_node, n_elements);
+}
+
+void edge_probability(struct node *node, int n_elements){ // Se recorre cada nodo
+    if (!node) {
+        return;
+    }
+    assign_probability(node->first_connection, n_elements, node->probability); // Recibe el nodo actual
+    return edge_probability(node->next_node, n_elements);
+}
+
+void assign_probability(struct edge *edge, int n_elements, float probability_node) { // Modifica las probabilidades de cada conexion del nodo actual
+    if (!edge) {
+        return;
+    }
+    float edge_probability = 0;
+    edge_probability = (float)edge->occurrences / (float)n_elements;
+    edge->probability = edge_probability / probability_node;
+    return assign_probability(edge->next_edge, n_elements, probability_node);
 }
