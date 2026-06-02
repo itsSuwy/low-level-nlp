@@ -1,7 +1,7 @@
 //
 // Created by suwy on 5/25/26.
 //
-
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "../include/02_Node-STR.h"
@@ -21,6 +21,8 @@ static void node_probability(struct node *node, int n_elements);
 static void edge_probability(struct node *node, int n_elements);
 static void assign_probability(struct edge *edge, int n_elements, float probability_node);
 static void new_edge(struct node *node_1, struct node *node_2);
+static void impresion(struct node *node);
+static void impresion_edges(struct edge *edge);
 
 struct stack_nodes {
     struct node *first_node;
@@ -200,4 +202,31 @@ static void assign_probability(struct edge *edge, int n_elements, float probabil
     edge_probability = (float)edge->occurrences / (float)n_elements;
     edge->probability = edge_probability / probability_node;
     return assign_probability(edge->next_edge, n_elements, probability_node);
+}
+
+void print_graph(struct graph *graph) {
+    impresion(graph->start);
+}
+
+static void impresion(struct node *node) {
+    if (!node) {
+        return;
+    }
+    printf("|--- [%s] ---| -> (%i) apariciones + %.2f%% de probabilidad\n", node->word, node->occurrences, node->probability*100);
+    if (!node->first_connection) { // Carece de conexiones la palabra
+        puts("\t|-> Palabra carente de conexiones\n");
+    }else {
+        impresion_edges(node->first_connection);
+        printf("\n");
+    }
+    impresion(node->next_node);
+}
+
+static void impresion_edges(struct edge *edge) {
+    if (!edge) {
+        return;
+    }
+    printf("\t|-> (x%i) -> %s\n",edge->occurrences,edge->node->word);
+    printf("\t\t|-> %.2f%% de probabilidad\n", edge->probability*100);
+    impresion_edges(edge->next_edge);
 }
