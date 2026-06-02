@@ -6,6 +6,26 @@
 #include <stdlib.h>
 #include "../include/02_Node-STR.h"
 
+struct node *initialise_node(void);
+struct edge *initialise_edge(void);
+void initialise_word_stack(struct graph *graph);
+struct node *word_repeated(struct node *node, char *word);
+struct node *filling_node(struct node *node,char *word);
+void list_of_nodes(struct graph *graph, struct node *node);
+struct node *node_to_graph(struct graph *graph, char *word);
+struct edge *is_there_a_connection(struct edge *edge, struct node *node_2);
+void reset_stack(struct stack_nodes *stack);
+void change_values(struct stack_nodes *stack);
+void assign_edge(struct node *node_1, struct node *node_2);
+void node_probability(struct node *node, int n_elements);
+void edge_probability(struct node *node, int n_elements);
+void assign_probability(struct edge *edge, int n_elements, float probability_node);
+
+struct stack_nodes {
+    struct node *first_node;
+    struct node *second_node; // The word that its supposed to point first_word
+};
+
 // START: of initializations
 struct graph *initialise_graph(void) { // The initialization of a graph
     struct graph *graph = (struct graph *)calloc(1,sizeof(struct graph));
