@@ -28,25 +28,10 @@ struct edge {
     struct node *node; // Nodo al que apunta la conexion
 };
 
-struct stack_nodes {
-    struct node *first_node;
-    struct node *second_node; // The word that its supposed to point first_word
-    //bool kill;
-};
-
+// Funciones publicas
 struct graph *initialise_graph(void);
-struct node *initialise_node(void);
-struct edge *initialise_edge(void);
-void initialise_word_stack(struct graph *graph);
-struct node *word_repeated(struct node *node, char *word);
-struct node *filling_node(struct node *node,char *word);
-void list_of_nodes(struct graph *graph, struct node *node);
-struct node *node_to_graph(struct graph *graph, char *word);
-struct edge *is_there_a_connection(struct edge *edge, struct node *node_2);
 void new_edge(struct node *node_1, struct node *node_2);
-void reset_stack(struct stack_nodes *stack);
-void change_values(struct stack_nodes *stack);
-void assign_edge(struct node *node_1, struct node *node_2);
 void aduana(struct graph *graph, char *word);
+void graph_probability(struct graph *graph);
 
 #endif //LOW_LEVEL_NLP_02_NODE_STR_H
