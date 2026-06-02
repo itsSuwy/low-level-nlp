@@ -21,16 +21,16 @@
 // Anticonstitucionalísimamente <- 29 letters
 // Pneumonoultramicroscopicsilicovolcanoconiosis <- 45 letters
 
-char *word_package(void);
-char *special_word(void);
-void extraction(char *original_string, char *word, struct graph *graph);
-int validation_V2(char *original_string, char *word);
-char pop(char *original_string);
-char *merge(char *word, char character);
-char *spanish_merge(char *word, char *spanish_character);
-unsigned char spanish_mayus_to_minus(unsigned char letter);
-char *fill_special_word(char *original_string, char *spanish_word);
-int spanish_special_characters(char *original_string);
+static char *word_package(void);
+static char *special_word(void);
+static void extraction(char *original_string, char *word, struct graph *graph);
+static int validation_V2(char *original_string, char *word);
+static char pop(char *original_string);
+static char *merge(char *word, char character);
+static char *spanish_merge(char *word, char *spanish_character);
+static unsigned char spanish_mayus_to_minus(unsigned char letter);
+static char *fill_special_word(char *original_string, char *spanish_word);
+static int spanish_special_characters(char *original_string);
 
 void reading_file(struct graph *graph) {
     FILE *fp = fopen("../texts/Prueba_5.txt", "r");
@@ -51,7 +51,7 @@ void reading_file(struct graph *graph) {
 }
 
 // START: Formatos para guardar letras
-char *word_package(void) { // Enfocado a letras NORMALES, reserva espacio para su estructura normal
+static char *word_package(void) { // Enfocado a letras NORMALES, reserva espacio para su estructura normal
     char *string = (char *)calloc(2, sizeof(char)); // Se inicializa con 2 espacios, uno para el caracter y otro para \0
     if (!string) {
         puts("Memory problem");
@@ -60,7 +60,7 @@ char *word_package(void) { // Enfocado a letras NORMALES, reserva espacio para s
     return string;
 }
 
-char *special_word(void) { // Enfocado a letras HISPANAS, reserva espacio para su estructura en hexadecimal
+static char *special_word(void) { // Enfocado a letras HISPANAS, reserva espacio para su estructura en hexadecimal
     char *word = (char *)calloc(3, sizeof(char));
     if (!word) {
         exit(-1);
@@ -74,7 +74,7 @@ char *special_word(void) { // Enfocado a letras HISPANAS, reserva espacio para s
    Funcion recursiva encargada de recorrer caracter por caracter del arreglo,
    controlando los posibles estados que pueda presentar el codigo respecto a los datos que procesa
 */
-void extraction(char *original_string, char *word, struct graph *graph) {
+static void extraction(char *original_string, char *word, struct graph *graph) {
     if (*original_string == '\0') { // La linea llego a su fin
         if (word[0] != '\0') {
             aduana(graph, word);
@@ -129,7 +129,7 @@ void extraction(char *original_string, char *word, struct graph *graph) {
     }
 }
 
-int validation_V2(char *original_string, char *word) { // Valida posibles escenarios de la palabra
+static int validation_V2(char *original_string, char *word) { // Valida posibles escenarios de la palabra
     if ((unsigned char)*original_string == 0xC3) { // En caso de que se detecte que es una letra hispana
         return SPANISH_WORD;
     }
@@ -191,7 +191,7 @@ int validation_V2(char *original_string, char *word) { // Valida posibles escena
     }
 }
 
-int spanish_special_characters(char *original_string) {
+static int spanish_special_characters(char *original_string) {
     if ((unsigned char)*original_string == 0xC2) { // <- Signos de apertura detectados
         return 2; // La funcion debera saltar 2 bytes
     }
@@ -202,13 +202,13 @@ int spanish_special_characters(char *original_string) {
 }
 //START: Logica para caracteres normales
 
-char pop(char *original_string) { // Se encarga de extraer y retornar un solo caracter del string original
+static char pop(char *original_string) { // Se encarga de extraer y retornar un solo caracter del string original
     char value = '\0';
     value = *original_string;
     return value;
 }
 
-char *merge(char *word, char character) { // Agrega el caracter extraido del string original al string de la palabra
+static char *merge(char *word, char character) { // Agrega el caracter extraido del string original al string de la palabra
     char lower_character = '\0';
     lower_character = (char)tolower(character);
     if (word[0] != '\0' ) { // En caso de que en la posicion 1 ya tenga un caracter
@@ -230,7 +230,7 @@ char *merge(char *word, char character) { // Agrega el caracter extraido del str
 
 // START: Logica para caracteres hispanos
 
-char *fill_special_word(char *original_string, char *spanish_word) { // Se encarga de llenar el arreglo dinamico con codigo en hexadecimal
+static char *fill_special_word(char *original_string, char *spanish_word) { // Se encarga de llenar el arreglo dinamico con codigo en hexadecimal
     spanish_word[0] = (char)*original_string;
     unsigned char auxiliar = '\0';
     auxiliar = (unsigned char)*(original_string+1);
@@ -240,7 +240,7 @@ char *fill_special_word(char *original_string, char *spanish_word) { // Se encar
     return spanish_word;
 }
 
-unsigned char spanish_mayus_to_minus(unsigned char letter) { // Secuencia de posibles combinaciones de caracteres hispanos
+static unsigned char spanish_mayus_to_minus(unsigned char letter) { // Secuencia de posibles combinaciones de caracteres hispanos
     switch (letter) {
         case 0x91: // Ñ
             return 0xb1; // ñ minuscula
@@ -269,7 +269,7 @@ unsigned char spanish_mayus_to_minus(unsigned char letter) { // Secuencia de pos
     }
 } // Fuente: https://docs.genexus.com/en/wiki?10513,Unicode%2FUTF-8-Character+table
 
-char *spanish_merge(char *word, char *spanish_character) { // Anexa la letra especial a la palabra original
+static char *spanish_merge(char *word, char *spanish_character) { // Anexa la letra especial a la palabra original
     int size = 0;
     size = strlen(word);
     if (size == 0) { // Nuestra palabra esta vacia

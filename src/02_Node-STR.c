@@ -6,20 +6,21 @@
 #include <stdlib.h>
 #include "../include/02_Node-STR.h"
 
-struct node *initialise_node(void);
-struct edge *initialise_edge(void);
-void initialise_word_stack(struct graph *graph);
-struct node *word_repeated(struct node *node, char *word);
-struct node *filling_node(struct node *node,char *word);
-void list_of_nodes(struct graph *graph, struct node *node);
-struct node *node_to_graph(struct graph *graph, char *word);
-struct edge *is_there_a_connection(struct edge *edge, struct node *node_2);
-void reset_stack(struct stack_nodes *stack);
-void change_values(struct stack_nodes *stack);
-void assign_edge(struct node *node_1, struct node *node_2);
-void node_probability(struct node *node, int n_elements);
-void edge_probability(struct node *node, int n_elements);
-void assign_probability(struct edge *edge, int n_elements, float probability_node);
+static struct node *initialise_node(void);
+static struct edge *initialise_edge(void);
+static void initialise_word_stack(struct graph *graph);
+static struct node *word_repeated(struct node *node, char *word);
+static struct node *filling_node(struct node *node,char *word);
+static void list_of_nodes(struct graph *graph, struct node *node);
+static struct node *node_to_graph(struct graph *graph, char *word);
+static struct edge *is_there_a_connection(struct edge *edge, struct node *node_2);
+static void reset_stack(struct stack_nodes *stack);
+static void change_values(struct stack_nodes *stack);
+static void assign_edge(struct node *node_1, struct node *node_2);
+static void node_probability(struct node *node, int n_elements);
+static void edge_probability(struct node *node, int n_elements);
+static void assign_probability(struct edge *edge, int n_elements, float probability_node);
+static void new_edge(struct node *node_1, struct node *node_2);
 
 struct stack_nodes {
     struct node *first_node;
@@ -36,7 +37,7 @@ struct graph *initialise_graph(void) { // The initialization of a graph
     return graph;
 }
 
-struct node *initialise_node(void){ // The initialization of a node
+static struct node *initialise_node(void){ // The initialization of a node
     struct node *node = (struct node *)calloc(1,sizeof(struct node));
     if (!node) {
         exit(-1);
@@ -44,7 +45,7 @@ struct node *initialise_node(void){ // The initialization of a node
     return node;
 }
 
-struct edge *initialise_edge(void) { // The initialization of an edge
+static struct edge *initialise_edge(void) { // The initialization of an edge
     struct edge *edge = (struct edge *)calloc(1,sizeof(struct edge));
     if (!edge) {
         exit(-1);
@@ -52,7 +53,7 @@ struct edge *initialise_edge(void) { // The initialization of an edge
     return edge;
 }
 
-void initialise_word_stack(struct graph *graph) {
+static void initialise_word_stack(struct graph *graph) {
     graph->stack = (struct stack_nodes *)calloc(1,sizeof(struct stack_nodes));
     if (!graph->stack) {
         exit(-1);
@@ -78,17 +79,17 @@ void aduana(struct graph *graph, char *word) {
     }
 }
 
-void change_values(struct stack_nodes *stack) {
+static void change_values(struct stack_nodes *stack) {
     stack->first_node = stack->second_node;
     stack->second_node = NULL;
 }
 
-void reset_stack(struct stack_nodes *stack) {
+static void reset_stack(struct stack_nodes *stack) {
     stack->first_node = NULL;
     stack->second_node = NULL;
 }
 
-struct node *node_to_graph(struct graph *graph, char *word) {
+static struct node *node_to_graph(struct graph *graph, char *word) {
     struct node *repeated_node = word_repeated(graph->start, word);
     if (!repeated_node) { // No existe la palabra repetida
         struct node *node = initialise_node();
@@ -101,7 +102,7 @@ struct node *node_to_graph(struct graph *graph, char *word) {
     }
 }
 
-struct node *word_repeated(struct node *node, char *word) { // Indica si ya existe un nodo con la palabra asignada
+static struct node *word_repeated(struct node *node, char *word) { // Indica si ya existe un nodo con la palabra asignada
     if (!node) {
         return NULL; // No existe nadie repetido
     }
@@ -111,7 +112,7 @@ struct node *word_repeated(struct node *node, char *word) { // Indica si ya exis
     return word_repeated(node->next_node, word);
 }
 
-struct node *filling_node(struct node *node,char *word) { // En caso de que sea la primera vez que aparece la palabra
+static struct node *filling_node(struct node *node,char *word) { // En caso de que sea la primera vez que aparece la palabra
     int size = 0;
     size = strlen(word);
     node->word = (char *)calloc(size+1,sizeof(char)); // +1 para darle espacio al '\0'
@@ -123,7 +124,7 @@ struct node *filling_node(struct node *node,char *word) { // En caso de que sea 
     return node;
 }
 
-void list_of_nodes(struct graph *graph, struct node *node) {
+static void list_of_nodes(struct graph *graph, struct node *node) {
     if (!graph->start) { // Es el primer nodo que entra al grafo
         graph->start = node;
         graph->end = node;
@@ -136,7 +137,7 @@ void list_of_nodes(struct graph *graph, struct node *node) {
 
 // INICIO: Configuracion de las conexiones
 
-void assign_edge(struct node *node_1, struct node *node_2) {
+static void assign_edge(struct node *node_1, struct node *node_2) {
     struct edge *aux = is_there_a_connection(node_1->first_connection, node_2);
     if (!aux) { // No existe conexion
         new_edge(node_1, node_2);
@@ -145,7 +146,7 @@ void assign_edge(struct node *node_1, struct node *node_2) {
     }
 }
 
-void new_edge(struct node *node_1, struct node *node_2) {
+static void new_edge(struct node *node_1, struct node *node_2) {
     struct edge *edge = initialise_edge();
     edge->node = node_2;
     edge->occurrences = 1;
@@ -158,7 +159,7 @@ void new_edge(struct node *node_1, struct node *node_2) {
     }
 }
 
-struct edge *is_there_a_connection(struct edge *edge, struct node *node_2) {
+static struct edge *is_there_a_connection(struct edge *edge, struct node *node_2) {
     if (!edge) { // No hay nadie apuntando a node_2
         return NULL;
     }
@@ -175,7 +176,7 @@ void graph_probability(struct graph *graph) {
     edge_probability(graph->start, graph->n_elements); // Obtiene las probabilidades de P(A|B) = P(BnA)/P(B)
 }
 
-void node_probability(struct node *node, int n_elements) { // Se determina la probabilidad general del Nodo
+static void node_probability(struct node *node, int n_elements) { // Se determina la probabilidad general del Nodo
     if (!node) {
         return;
     }
@@ -183,7 +184,7 @@ void node_probability(struct node *node, int n_elements) { // Se determina la pr
     return node_probability(node->next_node, n_elements);
 }
 
-void edge_probability(struct node *node, int n_elements){ // Se recorre cada nodo
+static void edge_probability(struct node *node, int n_elements){ // Se recorre cada nodo
     if (!node) {
         return;
     }
@@ -191,7 +192,7 @@ void edge_probability(struct node *node, int n_elements){ // Se recorre cada nod
     return edge_probability(node->next_node, n_elements);
 }
 
-void assign_probability(struct edge *edge, int n_elements, float probability_node) { // Modifica las probabilidades de cada conexion del nodo actual
+static void assign_probability(struct edge *edge, int n_elements, float probability_node) { // Modifica las probabilidades de cada conexion del nodo actual
     if (!edge) {
         return;
     }
