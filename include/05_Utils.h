@@ -6,6 +6,6 @@
 #define LOW_LEVEL_NLP_05_UTILS_H
 #include "../include/02_Node-STR.h"
 
-void opening_file(struct graph *graph);
+void menu(void);
 
 #endif //LOW_LEVEL_NLP_05_UTILS_H
