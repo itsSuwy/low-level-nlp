@@ -23,6 +23,8 @@ static void assign_probability(struct edge *edge, int n_elements, float probabil
 static void new_edge(struct node *node_1, struct node *node_2);
 static void impresion(struct node *node);
 static void impresion_edges(struct edge *edge);
+static void stalin_node(struct node *node);
+static void stalin_edge(struct edge *edge);
 
 struct stack_nodes {
     struct node *first_node;
@@ -230,4 +232,38 @@ static void impresion_edges(struct edge *edge) {
     printf("\t|-> (x%i) -> %s\n",edge->occurrences,edge->node->word);
     printf("\t\t|-> %.2f%% de probabilidad\n", edge->probability*100);
     impresion_edges(edge->next_edge);
+}
+
+// Funciones para liberar memoria del grafo
+void stalin_graph(struct graph *graph) {
+    if (!graph) {
+        puts("No hay grafo por liberar");
+        return;
+    }
+    stalin_node(graph->start);
+    graph->start = NULL;
+    graph->end = NULL;
+    free(graph->stack);
+    free(graph);
+    puts("Grafo liberado con exito");
+}
+
+static void stalin_node(struct node *node) {
+    if (!node) {
+        return;
+    }
+    struct node *next_node = node->next_node;
+    free(node->word); // Se libera la memoria dinamica de la palabra
+    stalin_edge(node->first_connection); // Se librean todas las conexiones realizadas
+    free(node); // Se libera al nodo actual
+    stalin_node(next_node);
+}
+
+static void stalin_edge(struct edge *edge) {
+    if (!edge) {
+        return;
+    }
+    struct edge *next_edge = edge->next_edge;
+    free(edge);
+    return stalin_edge(next_edge);
 }
