@@ -1,0 +1,11 @@
+//
+// Created by suwy on 6/2/26.
+//
+
+#ifndef LOW_LEVEL_NLP_05_UTILS_H
+#define LOW_LEVEL_NLP_05_UTILS_H
+#include "../include/02_Node-STR.h"
+
+void opening_file(struct graph *graph);
+
+#endif //LOW_LEVEL_NLP_05_UTILS_H
