@@ -31,7 +31,7 @@ static char *input_from_user(void) {
     puts("Ingrese el nombre del archivo a analizar");
         scanf(" %99[^\n]", buffer);
     int total_size = 0;
-    total_size = strlen(buffer) + strlen(PATH) + 1; // El uno representa el espacio para '0'
+    total_size = strlen(buffer) + strlen(PATH) + 1; // El uno representa el espacio para '\0'
     char *new_input = (char *)calloc(total_size, sizeof(char));
     if (!new_input) {
         exit(-1);
