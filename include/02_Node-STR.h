@@ -33,5 +33,6 @@ struct graph *initialise_graph(void);
 void aduana(struct graph *graph, char *word);
 void graph_probability(struct graph *graph);
 void print_graph(struct graph *graph);
+void stalin_graph(struct graph *graph);
 
 #endif //LOW_LEVEL_NLP_02_NODE_STR_H
