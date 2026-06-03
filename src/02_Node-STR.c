@@ -25,6 +25,7 @@ static void impresion(struct node *node);
 static void impresion_edges(struct edge *edge);
 static void stalin_node(struct node *node);
 static void stalin_edge(struct edge *edge);
+static void connections_print(struct edge *edge, char *word);
 
 struct stack_nodes {
     struct node *first_node;
@@ -207,8 +208,8 @@ static void assign_probability(struct edge *edge, int n_elements, float probabil
 }
 
 void print_graph(struct graph *graph) {
-    printf("Se registraron con exito %i palabras totales\n", graph->n_elements);
     impresion(graph->start);
+    printf("Se registraron con exito %i palabras\n", graph->n_elements);
 }
 
 static void impresion(struct node *node) {
@@ -232,6 +233,36 @@ static void impresion_edges(struct edge *edge) {
     printf("\t|-> (x%i) -> %s\n",edge->occurrences,edge->node->word);
     printf("\t\t|-> %.2f%% de probabilidad\n", edge->probability*100);
     impresion_edges(edge->next_edge);
+}
+
+void node_focus_print(struct node *node, int n) {
+    if (!node) {
+        printf("\n");
+        return;
+    }
+    printf("Nodo numero: %i | Palabra: %s | P(A): %.2f%% | Apariciones: %i\n", n+1, node->word, node->probability * 100, node->occurrences);
+    return node_focus_print(node->next_node, n+1);
+}
+
+void edge_focus_print(struct node *node) {
+    if (!node) {
+        printf("\n");
+        return;
+    }
+    if (!node->first_connection) {
+        printf("[%s] ---> Carece de conexiones", node->word);
+        return edge_focus_print(node->next_node);
+    }
+    connections_print(node->first_connection, node->word);
+    return edge_focus_print(node->next_node);
+}
+
+static void connections_print(struct edge *edge, char *word) {
+    if (!edge) {
+        return;
+    }
+    printf("[%s] ---> [%s] | %i conexiones | %.2f%% de probabilidad\n",word, edge->node->word, edge->occurrences, edge->probability*100);
+    return connections_print(edge->next_edge, word);
 }
 
 // Funciones para liberar memoria del grafo
