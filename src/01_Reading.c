@@ -32,22 +32,14 @@ static unsigned char spanish_mayus_to_minus(unsigned char letter);
 static char *fill_special_word(char *original_string, char *spanish_word);
 static int spanish_special_characters(char *original_string);
 
-void reading_file(struct graph *graph) {
-    FILE *fp = fopen("../texts/Prueba_5.txt", "r");
-
-    if (!fp) {
-        puts("El archivo no existe");
-        puts("Cerrando el programa por precaucion");
-        exit(-1);
-    }
+void reading_file(FILE *source, struct graph *graph) {
     char *line = NULL;
     size_t len = 0;
-    while (getline(&line,&len,fp) != -1) {
+    while (getline(&line,&len,source) != -1) {
         char *string = word_package();
         extraction(line, string, graph);
     }
     free(line);
-    fclose(fp);
 }
 
 // START: Formatos para guardar letras
