@@ -11,4 +11,5 @@ add_executable(low_level_nlp
         src/02_Node-STR.c
         src/03_Dijkstra.c
         src/04_Outputs.c
+        src/05_Utils.c
 )
