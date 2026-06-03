@@ -38,48 +38,108 @@
 // Anticonstitucionalísimamente <- 29 letters
 // Pneumonoultramicroscopicsilicovolcanoconiosis <- 45 letters
 
+static void opening_file(struct graph *graph);
 static char *input_from_user(void);
-static void limpiando_buffer(void);
 static void indicaciones(void);
 static char user_input(char opcion);
 static void mensaje_principal(void);
 static void terminal_cleaning(void);
 static void titulo_principal(void);
+static void limpiando_buffer(void);
+static void general_print_graph(struct graph *graph);
+static void node_print(struct node *node);
+static void edge_print(struct node *node);
+static void cleaning_graph(struct graph *graph);
+static void default_case(void);
 
 void menu(void) {
     struct graph *graph = NULL;
     mensaje_principal();
     char character = '\0';
     while (1) {
+        if (!graph) {
+            graph = initialise_graph();
+        }
         character = user_input(character);
         switch (character) {
             case FILE_READING:
+                opening_file(graph);
                 break;
             case GENERAL_GRAPH_PRINT:
+                general_print_graph(graph);
                 break;
             case NODE_PRINT:
+                node_print(graph->start);
                 break;
             case EDGE_PRINT:
+                edge_print(graph->start);
                 break;
             case PHRASE_PREDICTION:
+                puts("Todo...");
                 break;
             case COMMON_PHRASES:
+                puts("Todo....");
                 break;
             case AUTOSUGGESTION:
+                puts("Todo.....");
                 break;
             case CLEANING_GRAPH:
+                cleaning_graph(graph);
                 break;
             case EXIT:
                 exit(0);
             default:
-                puts("Entrada invalida!");
-                puts("Presione cualquier tecla para continuar...");
-                scanf(" %c", &character);
-                limpiando_buffer();
-                terminal_cleaning();
+                default_case();
                 break;
         }
     }
+}
+
+static void general_print_graph(struct graph *graph) {
+    if (!graph) {
+        puts(BOLD RED "Error: " RESET "Grafo vacio\n");
+        return;
+    }else{
+        print_graph(graph);
+    }
+}
+
+static void node_print(struct node *node) {
+    if (!node) {
+        puts(BOLD RED "Error: " RESET "El grafo no cuenta con nodos inicializados!\n");
+        return;
+    }else {
+        node_focus_print(node, 0);
+    }
+}
+
+static void edge_print(struct node *node) {
+    if (!node) {
+        puts(BOLD RED "Error: " RESET "El grafo no cuenta con nodos inicializados!\n");
+        return;
+    }
+    if (!node->first_connection) {
+        puts(BOLD RED "Error: " RESET "El grafo no cuenta con conexiones asignadas!\n");
+        return;
+    }
+    edge_focus_print(node);
+}
+
+static void cleaning_graph(struct graph *graph) {
+    if (!graph) {
+        puts(BOLD RED "Error: " RESET "El grafo no esta inicializado\n");
+        return;
+    }
+    stalin_graph(graph);
+}
+
+static void default_case(void) {
+    char character;
+    puts(BOLD RED "Entrada invalida!"RESET);
+    puts("Presione cualquier tecla para " BOLD GREEN "continuar..." RESET);
+    scanf(" %c", &character);
+    limpiando_buffer();
+    terminal_cleaning();
 }
 
 static void opening_file(struct graph *graph) {
@@ -120,8 +180,8 @@ static void mensaje_principal(void) {
 }
 
 static void titulo_principal(void) {
-    char titulo[20] = "Estructura de Datos";
     srand(time(NULL));
+    char titulo[20] = "Estructura de Datos";
     int numero = 0;
     printf("\t\t\t");
     for (int i=0; i<19; i++) {
