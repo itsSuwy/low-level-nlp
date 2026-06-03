@@ -7,6 +7,8 @@
 
 #include "../include/02_Node-STR.h"
 
-void reading_file(struct graph *graph);
+#include <stdio.h>
+
+void reading_file(FILE *source, struct graph *graph);
 
 #endif //LOW_LEVEL_NLP_01_READING_H
