@@ -1,49 +1,27 @@
 //
 // Created by suwy on 5/25/26.
 //
-
+// Bibliotecas necesarias
 #include "../include/01_Reading.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-//#define max_size 46
 
-#define READY_TO_PUSH 0
-#define WORD_EMPTY 1
-#define EXPANDIBLE_WORD 2
-#define CUT_WORD 3
-#define SPANISH_WORD 4
-#define SPANISH_TWO_BYTES_DIGIT 5
-#define SPANISH_THREE_BYTES_DIGITS 6
+static void extraction(char *original_string, char *word, struct graph *graph); // Unico prototipo de funcion local
 
-// Electroencefalografista <- 25 letters
-// Anticonstitucionalísimamente <- 29 letters
-// Pneumonoultramicroscopicsilicovolcanoconiosis <- 45 letters
-
-static char *word_package(void);
-static char *special_word(void);
-static void extraction(char *original_string, char *word, struct graph *graph);
-static int validation_V2(char *original_string, char *word);
-static char pop(char *original_string);
-static char *merge(char *word, char character);
-static char *spanish_merge(char *word, char *spanish_character);
-static unsigned char spanish_mayus_to_minus(unsigned char letter);
-static char *fill_special_word(char *original_string, char *spanish_word);
-static int spanish_special_characters(char *original_string);
-
-void reading_file(FILE *source, struct graph *graph) {
-    char *line = NULL;
+void reading_file(FILE *source, struct graph *graph) { // Funcion que lee linea por linea un archivo.txt
+    char *line = NULL; // Se inicializa en NULL el ptr de cada linea
     size_t len = 0;
-    while (getline(&line,&len,source) != -1) {
-        char *string = word_package();
-        extraction(line, string, graph);
+    while (getline(&line,&len,source) != -1) { // Lee cada linea del archivo hasta que se tope con un EOF (-1)
+        char *string = word_package(); // Se inicializa un contendor para cada letra de la palabra
+        extraction(line, string, graph); // Funcion para recibir la linea completa convertida en string y extrae letra por letra
     }
-    free(line);
+    free(line); // Se libera la memoria dinamica asignada a la linea leida
 }
 
 // START: Formatos para guardar letras
-static char *word_package(void) { // Enfocado a letras NORMALES, reserva espacio para su estructura normal
+char *word_package(void) { // Enfocado a letras NORMALES, reserva espacio para su estructura normal
     char *string = (char *)calloc(2, sizeof(char)); // Se inicializa con 2 espacios, uno para el caracter y otro para \0
     if (!string) {
         puts("Memory problem");
@@ -52,10 +30,10 @@ static char *word_package(void) { // Enfocado a letras NORMALES, reserva espacio
     return string;
 }
 
-static char *special_word(void) { // Enfocado a letras HISPANAS, reserva espacio para su estructura en hexadecimal
-    char *word = (char *)calloc(3, sizeof(char));
-    if (!word) {
-        exit(-1);
+char *special_word(void) { // Enfocado a letras HISPANAS, reserva espacio para su estructura en hexadecimal
+    char *word = (char *)calloc(3, sizeof(char)); // Las letras admitidas tienen un largo de 2 bytes + 1 de '\0', requieren 3 bytes
+    if (!word) { // Error de memoria
+        exit(-1); // Se cierra el programa por seguiridad
     }
     return word;
 }
@@ -68,71 +46,70 @@ static char *special_word(void) { // Enfocado a letras HISPANAS, reserva espacio
 */
 static void extraction(char *original_string, char *word, struct graph *graph) {
     if (*original_string == '\0') { // La linea llego a su fin
-        if (word[0] != '\0') {
-            aduana(graph, word);
+        if (word[0] != '\0') { // Si la palabra tenia caracteres asignados
+            aduana(graph, word); // Se envia a la aduana
         }
-        aduana(graph, NULL);
-        free(word);
+        aduana(graph, NULL); // Aduana recibe la alerta de que es la palabra final -> no tiene conexiones
+        free(word); // Se libera la memoria asignada a la palabra
         return;
     }
     int n = 0, illegal_character = 0;
-    illegal_character = spanish_special_characters(original_string);
-    n = validation_V2(original_string, word);
+    illegal_character = spanish_special_characters(original_string); // Se valida si en la posicion actual hay caracteres hispanos
+    n = validation_V2(original_string, word); // Validation evalua a que caso corresponde la letra actual
     switch (n) {
-        case READY_TO_PUSH: { // La palabra esta completa y requiere subirse
+        case READY_TO_PUSH: { // Se llego a un signo de puntuacion, la palabra esta completa y debe subirse al grafo pasando por la aduana
             aduana(graph, word);
-            free(word);
-            char *new_word = word_package();
-            return extraction(original_string+1, new_word, graph);
+            free(word); // Se libera la memoria asignada
+            char *new_word = word_package(); // Se crea un nuevo contenedor
+            return extraction(original_string+1, new_word, graph); // Se avanza una posicion en el string
         }
-        case WORD_EMPTY: { // La palabra esta vacia y no hace falta subirla
+        case WORD_EMPTY: { // Se detecto un signo de puntuacion (normal o hispano) pero la palabra se encuentra vacia, no hace falta subirla al grafo
             if (illegal_character > 0) { // En caso de que el cut haya sido provocado por un signo especial del espaniol
-                return extraction(original_string+illegal_character, word, graph); // Se omiten los caracteres especiales (pueden ser 2 o tres)
+                return extraction(original_string+illegal_character, word, graph); // Se omiten los caracteres especiales (puede ser 1 o 2) los espacios a saltar
             }
-            return extraction(original_string+1, word, graph);
+            return extraction(original_string+1, word, graph); // En caso de que no hubiera caracter hispano
             break;
         }
-        case EXPANDIBLE_WORD: { // La palabra esta llena pero aun puede expandirse mas
+        case EXPANDIBLE_WORD: { // La palabra esta llena pero se puede expandir con la letra en la posicion actual porque no es signo de puntuacion
             char character = '\0';
-            character = pop(original_string);
-            char *modified_word = merge(word, character);
-            return extraction(original_string+1, modified_word, graph);
+            character = pop(original_string); // Se extrae la letra de la posicion actual
+            char *modified_word = merge(word, character); // Se hace adjunta la letra a una nueva posicion dentro del contenedor actual
+            return extraction(original_string+1, modified_word, graph); // Se avanza a la siguiente posicion
         }
-        case CUT_WORD: {
-            // La palabra fue cortada por un signo de puntuacion
-            aduana(graph, word);
-            aduana(graph, NULL);
-            free(word);
+        case CUT_WORD: { // La palabra fue cortada por un signo de puntuacion
+            aduana(graph, word); // Se envia la palabra a la aduana
+            aduana(graph, NULL); // La aduana ahora recibe un NULL -> No apunta a nadie mas la palabra actual
+            free(word); // Se libera la memoria
             char *new_word = word_package();
             if (illegal_character > 0) { // En caso de que el cut haya sido provocado por un signo especial del espaniol
-                return extraction(original_string+illegal_character, new_word, graph); // Se omiten los caracteres especiales (pueden ser 2 o tres)
+                return extraction(original_string+illegal_character, new_word, graph);
             }
             return extraction(original_string+1, new_word, graph);
         }
         case SPANISH_WORD: { // Comportamiento para letras especiales hispanas
-            char *spanish_word = special_word();
-            spanish_word = fill_special_word(original_string, spanish_word);
-            char *modified_word = spanish_merge(word,spanish_word);
-            free(spanish_word);
-            return extraction(original_string+2,modified_word,graph);
+            char *spanish_word = special_word(); // Se crea un contendor para almacenar la letra especial
+            spanish_word = fill_special_word(original_string, spanish_word); // Se le asigna el caracter actual y siguiente del string
+            char *modified_word = spanish_merge(word,spanish_word); // Se asigna a la palabra actual el caracter hispano
+            free(spanish_word); // Se libera la memoria del contenedor especial
+            return extraction(original_string+2,modified_word,graph); // Se omite la siguiente posicion
         }
-        default:
-            exit(-1); // Esto nunca se deberia cumplir, pero como freno de seguridad se asigna
+        default: // Esto nunca se deberia cumplir, pero como freno de seguridad se asigna una salida
+            exit(-1);
     }
 }
 
-static int validation_V2(char *original_string, char *word) { // Valida posibles escenarios de la palabra
+int validation_V2(char *original_string, char *word) { // Valida posibles escenarios de la palabra
     if ((unsigned char)*original_string == 0xC3) { // En caso de que se detecte que es una letra hispana
         return SPANISH_WORD;
     }
-    if ((unsigned char)*original_string == 0XC2 || (unsigned char)*original_string == 0xE2) { //
-        if (word[0] != '\0') {
+    if ((unsigned char)*original_string == 0XC2 || (unsigned char)*original_string == 0xE2) { // Se detecta caracteres nativos del espaniol pero ilegales para el programa
+        if (word[0] != '\0') { // En caso de que la palabra tenga informacion
             return CUT_WORD; // Se debe cortar la frase
         }else {
             return WORD_EMPTY;
         }
     }
-    switch (*original_string) {
+    switch (*original_string) { // Evalua todos los caracteres ilegales
         case ' ':
             if (word[0] != '\0') {
                 return READY_TO_PUSH; // Se puede subir la palabra al grafo
@@ -140,6 +117,12 @@ static int validation_V2(char *original_string, char *word) { // Valida posibles
                 return WORD_EMPTY; // La palabra carece de informacion para subirse al grafo
             }
         // En caso de que se detecten signos que indiquen que la palabra no conecta con otra
+        case '-':
+            if (word[0] != '\0') {
+                return EXPANDIBLE_WORD; // Se puede expandir
+            }else {
+                return WORD_EMPTY; // La palabra carece de informacion para subirse al grafo
+            }
         case '.':
         case ',':
         case '/':
@@ -154,7 +137,6 @@ static int validation_V2(char *original_string, char *word) { // Valida posibles
         case '(':
         case ')':
         case '=':
-        case '-':
         case '%':
         case '^':
         case '$':
@@ -172,7 +154,7 @@ static int validation_V2(char *original_string, char *word) { // Valida posibles
         case '\\': // <- Referencia la '\'
         case '|':
         case '\t':
-        case '\n':
+        //case '\n':
             if (word[0] != '\0') {
                 return CUT_WORD; // La palabra esta llena y lista para subir al grafo
             }else {
@@ -183,7 +165,7 @@ static int validation_V2(char *original_string, char *word) { // Valida posibles
     }
 }
 
-static int spanish_special_characters(char *original_string) {
+int spanish_special_characters(char *original_string) {
     if ((unsigned char)*original_string == 0xC2) { // <- Signos de apertura detectados
         return 2; // La funcion debera saltar 2 bytes
     }
@@ -194,13 +176,13 @@ static int spanish_special_characters(char *original_string) {
 }
 //START: Logica para caracteres normales
 
-static char pop(char *original_string) { // Se encarga de extraer y retornar un solo caracter del string original
+char pop(char *original_string) { // Se encarga de extraer y retornar un solo caracter del string original
     char value = '\0';
     value = *original_string;
     return value;
 }
 
-static char *merge(char *word, char character) { // Agrega el caracter extraido del string original al string de la palabra
+char *merge(char *word, char character) { // Agrega el caracter extraido del string original al string de la palabra
     char lower_character = '\0';
     lower_character = (char)tolower(character);
     if (word[0] != '\0' ) { // En caso de que en la posicion 1 ya tenga un caracter
@@ -222,7 +204,7 @@ static char *merge(char *word, char character) { // Agrega el caracter extraido 
 
 // START: Logica para caracteres hispanos
 
-static char *fill_special_word(char *original_string, char *spanish_word) { // Se encarga de llenar el arreglo dinamico con codigo en hexadecimal
+char *fill_special_word(char *original_string, char *spanish_word) { // Se encarga de llenar el arreglo dinamico con codigo en hexadecimal
     spanish_word[0] = (char)*original_string;
     unsigned char auxiliar = '\0';
     auxiliar = (unsigned char)*(original_string+1);
@@ -232,7 +214,7 @@ static char *fill_special_word(char *original_string, char *spanish_word) { // S
     return spanish_word;
 }
 
-static unsigned char spanish_mayus_to_minus(unsigned char letter) { // Secuencia de posibles combinaciones de caracteres hispanos
+unsigned char spanish_mayus_to_minus(unsigned char letter) { // Secuencia de posibles combinaciones de caracteres hispanos
     switch (letter) {
         case 0x91: // Ñ
             return 0xb1; // ñ minuscula
@@ -261,7 +243,7 @@ static unsigned char spanish_mayus_to_minus(unsigned char letter) { // Secuencia
     }
 } // Fuente: https://docs.genexus.com/en/wiki?10513,Unicode%2FUTF-8-Character+table
 
-static char *spanish_merge(char *word, char *spanish_character) { // Anexa la letra especial a la palabra original
+char *spanish_merge(char *word, char *spanish_character) { // Anexa la letra especial a la palabra original
     int size = 0;
     size = strlen(word);
     if (size == 0) { // Nuestra palabra esta vacia
